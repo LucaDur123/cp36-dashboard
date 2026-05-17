@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>3° Reggimento Alpini — CP Addestramento</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -55,6 +55,112 @@ td{padding:6px 10px}
 .dash-name:hover{color:#0d3d6e}
 footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1px solid #c8ddef;margin-top:24px;background:#daeaf7}
 @media(max-width:640px){.twocol{grid-template-columns:1fr}}
+
+@media (max-width: 600px) {
+  /* ── HEADER ── */
+  #app-header > div:first-child {
+    padding: 6px 10px;
+    min-height: 48px;
+  }
+  #app-header > div:first-child span {
+    font-size: 11px;
+    padding: 0 6px;
+  }
+  #app-header > div:first-child img {
+    height: 32px !important;
+  }
+  /* NAV buttons: wrap and scroll horizontally */
+  #app-header > div:last-child {
+    height: auto !important;
+    padding: 4px 8px !important;
+    gap: 4px !important;
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  #app-header button {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    flex-shrink: 0;
+  }
+
+  /* ── MAIN ── */
+  main { padding: 8px !important; }
+  h2 { font-size: 14px !important; margin-bottom: 8px !important; }
+
+  /* ── DASHBOARD BANNER ── */
+  #dash-banner {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+  #dash-banner > div:nth-child(2) { display: none; } /* hide progress bar on mobile */
+
+  /* ── FILTERS ── */
+  .filters {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .filters input, .filters select {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* ── DASHBOARD TABLE ──
+     On mobile show only: #, Grado, Cognome Nome, status dots (scrollable) */
+  .tsc {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tsc table {
+    min-width: 700px !important;
+    font-size: 10px !important;
+  }
+
+  /* ── CARDS ── */
+  .card { border-radius: 6px; margin-bottom: 10px; }
+  .cbody { padding: 10px !important; }
+
+  /* ── INSERT FORM ── */
+  #view-insert .card > .cbody > div[style*="grid"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── GESTIONE grid ── */
+  #view-gestione > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── MODULO VIEW ── */
+  #view-modulo .card table { font-size: 10px; }
+
+  /* ── MODAL OVERLAY ── */
+  #scheda-overlay > div {
+    max-width: 100% !important;
+    max-height: 95vh !important;
+    border-radius: 8px !important;
+  }
+  #scheda-overlay table { font-size: 10px; }
+  #scheda-overlay th, #scheda-overlay td { padding: 4px 5px !important; }
+
+  /* ── STAMPA VIEW ── */
+  #view-stampa table { font-size: 10px; }
+  #view-stampa th, #view-stampa td { padding: 4px 5px; }
+
+  /* ── PIANI DI LEZIONE ── */
+  #view-piani .filters { flex-direction: column; }
+  #view-piani .filters select,
+  #view-piani .filters input { width: 100% !important; }
+
+  /* ── FOOTER ── */
+  footer { font-size: 9px !important; padding: 6px !important; }
+
+  /* ── PRONTI OVERLAY ── */
+  #pronti-overlay > div {
+    width: 96% !important;
+    max-height: 88vh !important;
+  }
+}
 </style>
 </head>
 <body>
