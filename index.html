@@ -56,7 +56,6 @@ td{padding:6px 10px}
 footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1px solid #c8ddef;margin-top:24px;background:#daeaf7}
 @media(max-width:640px){.twocol{grid-template-columns:1fr}}
 </style>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="app-header">
@@ -1758,7 +1757,6 @@ function openPrintAll(PS) {
 }
 
 function esportaExcel() {
-  if(typeof XLSX === "undefined"){ alert("Libreria Excel non caricata."); return; }
   var PS = buildPS();
   var today = new Date();
   var todayStr = ("0"+today.getDate()).slice(-2)+"/"+("0"+(today.getMonth()+1)).slice(-2)+"/"+today.getFullYear();
@@ -1774,184 +1772,100 @@ function esportaExcel() {
       .sort(function(a,b){ return b.data>a.data?1:-1; })[0] || null;
   }
 
-  var totalCols = 4 + MK.length * 2;
+  // Status colors
+  var BG  = {ok:"#C8E6C9", warning:"#FFF9C4", expired:"#FFCDD2", missing:"#ECEFF1"};
+  var FG  = {ok:"#1B5E20", warning:"#E65100", expired:"#B71C1C", missing:"#546E7A"};
 
-  // Build AOA
-  var titleRow = ["LENZUOLO PERENNE  \u2014  3\u00b0 REGGIMENTO ALPINI  \u2014  36^ Cp  \u2014  " + todayStr];
-  for(var ti=1;ti<totalCols;ti++) titleRow.push("");
-
-  var hdr1 = ["N\u00b0", "CP", "GRADO", "COGNOME E NOME"];
-  MK.forEach(function(m){ hdr1.push(MC[m].label); hdr1.push(""); });
-
-  var hdr2 = ["","","",""];
-  MK.forEach(function(){ hdr2.push("LUOGO"); hdr2.push("DATA"); });
-
-  var aoa = [titleRow, hdr1, hdr2];
-
-  sorted.forEach(function(p, i) {
-    var row = [i+1, "CP "+p.cp, p.grado, p.cognome+" "+p.nome];
-    MK.forEach(function(mod) {
-      var s = getLatest(p.id, mod);
-      row.push(s ? (s.luogo&&s.luogo.trim() ? s.luogo.trim() : "PINEROLO") : "");
-      row.push(s ? fmtDate(s.data) : "");
-    });
-    aoa.push(row);
-  });
-
-  // Legend
-  var legRow = ["","LEGENDA:","Valido","","In scad. \u226460gg","","Scaduto","","Non effettuato",""];
-  while(legRow.length < totalCols) legRow.push("");
-  aoa.push(legRow);
-
-  var wb = XLSX.utils.book_new();
-  var ws = XLSX.utils.aoa_to_sheet(aoa);
-
-  // Column widths
-  var wscols = [{wch:5},{wch:8},{wch:14},{wch:30}];
-  MK.forEach(function(){ wscols.push({wch:13}); wscols.push({wch:11}); });
-  ws["!cols"] = wscols;
-
-  // Row heights
-  var rowH = [{hpt:26},{hpt:60},{hpt:16}];
-  sorted.forEach(function(){ rowH.push({hpt:16}); });
-  rowH.push({hpt:20});
-  ws["!rows"] = rowH;
-
-  // Merges
-  var merges = [
-    {s:{r:0,c:0}, e:{r:0,c:totalCols-1}},  // title
-    {s:{r:1,c:0}, e:{r:2,c:0}},              // fixed headers merge rows 1-2
-    {s:{r:1,c:1}, e:{r:2,c:1}},
-    {s:{r:1,c:2}, e:{r:2,c:2}},
-    {s:{r:1,c:3}, e:{r:2,c:3}},
-  ];
-  MK.forEach(function(m,i){ merges.push({s:{r:1,c:4+i*2}, e:{r:1,c:4+i*2+1}}); });
-  ws["!merges"] = merges;
-
-  // Freeze panes
-  ws["!freeze"] = {xSplit:4, ySplit:3, topLeftCell:"E4", activePane:"bottomRight"};
-
-  // ── STYLE HELPERS ──
-  var COLORS = {
-    navyDark:  "0F2A44",
-    navy:      "1A3A5C",
-    navyMed:   "254D73",
-    navyLight: "4A8AB5",
-    blueHdr:   "1E5080",
-    subHdr:    "5B9EC9",
-    subHdrBg:  "BDD9EF",
-    oddRow:    "EBF5FB",
-    evenRow:   "FFFFFF",
-    ok:        "C8E6C9",  // green
-    okText:    "1B5E20",
-    warn:      "FFF9C4",  // yellow
-    warnText:  "F57F17",
-    exp:       "FFCDD2",  // red
-    expText:   "B71C1C",
-    miss:      "ECEFF1",  // grey
-    missText:  "546E7A",
-    legOk:     "C8E6C9",
-    legWarn:   "FFF9C4",
-    legExp:    "FFCDD2",
-    legMiss:   "ECEFF1",
+  // Build HTML table
+  var th = function(txt, style) {
+    return '<th style="'+style+'">'+txt+'</th>';
+  };
+  var td = function(txt, style) {
+    return '<td style="'+style+'">'+txt+'</td>';
   };
 
-  var BThin = function(col) { return {style:"thin", color:{rgb:col||"90A4AE"}}; };
-  var BMed  = function(col) { return {style:"medium", color:{rgb:col||COLORS.navyMed}}; };
+  var BASE_HDR = "background:#1A3A5C;color:#fff;font-weight:bold;font-family:Arial;font-size:9pt;text-align:center;border:1px solid #0F2A44;padding:4px 6px;white-space:nowrap;vertical-align:bottom";
+  var SUB_HDR  = "background:#BDD9EF;color:#1A3A5C;font-weight:bold;font-family:Arial;font-size:8pt;text-align:center;border:1px solid #7AAED0;padding:3px 4px";
+  var FIX_HDR  = "background:#1E5080;color:#fff;font-weight:bold;font-family:Arial;font-size:9pt;text-align:center;border:1px solid #0F2A44;padding:4px 6px";
 
-  function border(t,r,b,l) { return {top:t,right:r,bottom:b,left:l}; }
-  var BINNER = border(BThin(),BThin(),BThin(),BThin());
-  var BOUTER = border(BMed(COLORS.navy),BMed(COLORS.navy),BMed(COLORS.navy),BMed(COLORS.navy));
-  var BHDR   = border(BMed(COLORS.navyDark),BMed(COLORS.navyDark),BMed(COLORS.navyDark),BMed(COLORS.navyDark));
+  // Title row
+  var totalCols = 4 + MK.length * 2;
+  var html = '<table border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-family:Arial;font-size:9pt">';
 
-  function S(font, fill, align, border) {
-    var s = {};
-    if(font)   s.font  = Object.assign({name:"Arial"}, font);
-    if(fill)   s.fill  = {patternType:"solid", fgColor:{rgb:fill}};
-    if(align)  s.alignment = Object.assign({}, align);
-    if(border) s.border = border;
-    return s;
-  }
+  // Row 1: Title
+  html += '<tr><td colspan="'+totalCols+'" style="background:#1A3A5C;color:#fff;font-weight:bold;font-size:13pt;text-align:center;padding:8px;border:2px solid #0F2A44">LENZUOLO PERENNE &mdash; 3&deg; REGGIMENTO ALPINI &mdash; 36^ Cp &mdash; '+todayStr+'</td></tr>';
 
-  var C = {horizontal:"center", vertical:"center"};
-  var CW= {horizontal:"center", vertical:"center", wrapText:true};
-  var L = {horizontal:"left",   vertical:"center"};
-  var CT= {horizontal:"center", vertical:"center", textRotation:90}; // vertical text for mod headers
-
-  function applyCell(r, c, v, style) {
-    var addr = XLSX.utils.encode_cell({r:r, c:c});
-    ws[addr] = { v: v===undefined?"":v, t: typeof v==="number"?"n":"s", s: style };
-  }
-
-  // ── ROW 0: TITLE ──
-  applyCell(0, 0, titleRow[0],
-    S({bold:true, sz:14, color:{rgb:"FFFFFF"}}, COLORS.navy, {horizontal:"center",vertical:"center"}, BOUTER));
-  for(var c=1;c<totalCols;c++) applyCell(0, c, "", S({},{},{}, {}));
-
-  // ── ROW 1: FIXED HEADERS + MODULE NAMES ──
-  var fixedHdrs = ["\u00b0N","CP","GRADO","COGNOME E NOME"];
-  fixedHdrs.forEach(function(h,c) {
-    applyCell(1, c, h, S({bold:true,sz:10,color:{rgb:"FFFFFF"}}, COLORS.blueHdr, C, BHDR));
+  // Row 2: fixed headers (rowspan=2) + module names (colspan=2 each)
+  html += '<tr>';
+  html += '<th rowspan="2" style="'+FIX_HDR+';width:35px">N&deg;</th>';
+  html += '<th rowspan="2" style="'+FIX_HDR+';width:55px">CP</th>';
+  html += '<th rowspan="2" style="'+FIX_HDR+';width:90px">GRADO</th>';
+  html += '<th rowspan="2" style="'+FIX_HDR+';width:200px;text-align:left;padding-left:8px">COGNOME E NOME</th>';
+  MK.forEach(function(m) {
+    html += '<th colspan="2" style="'+BASE_HDR+';min-width:90px"><div style="writing-mode:vertical-lr;transform:rotate(180deg);height:70px;font-size:8pt;display:inline-block;line-height:1.2">'+MC[m].label+'</div></th>';
   });
-  MK.forEach(function(m, i) {
-    applyCell(1, 4+i*2, MC[m].label,
-      S({bold:true,sz:8,color:{rgb:"FFFFFF"}}, COLORS.navyMed, CT, BHDR));
-    applyCell(1, 4+i*2+1, "", S({},{},{}, {}));
-  });
+  html += '</tr>';
 
-  // ── ROW 2: LUOGO/DATA SUB-HEADERS ──
-  fixedHdrs.forEach(function(h,c) {
-    applyCell(2, c, "", S({bold:true,sz:9,color:{rgb:"FFFFFF"}}, COLORS.blueHdr, C, BHDR));
+  // Row 3: LUOGO/DATA sub-headers
+  html += '<tr>';
+  MK.forEach(function() {
+    html += '<th style="'+SUB_HDR+'">Luogo</th>';
+    html += '<th style="'+SUB_HDR+'">Data</th>';
   });
-  MK.forEach(function(m, i) {
-    applyCell(2, 4+i*2,   "LUOGO", S({bold:true,sz:8,color:{rgb:COLORS.navyDark}}, COLORS.subHdrBg, C, BINNER));
-    applyCell(2, 4+i*2+1, "DATA",  S({bold:true,sz:8,color:{rgb:COLORS.navyDark}}, COLORS.subHdrBg, C, BINNER));
-  });
+  html += '</tr>';
 
-  // ── DATA ROWS ──
+  // Data rows
   sorted.forEach(function(p, ri) {
-    var r = 3 + ri;
-    var isOdd = ri%2!==0;
-    var rowBg = isOdd ? COLORS.oddRow : COLORS.evenRow;
     var ms = PS[p.id] || {};
-
-    applyCell(r, 0, ri+1,          S({sz:9},           rowBg, C, BINNER));
-    applyCell(r, 1, "CP "+p.cp,    S({sz:9},           rowBg, C, BINNER));
-    applyCell(r, 2, p.grado,       S({sz:9},           rowBg, L, BINNER));
-    applyCell(r, 3, p.cognome+" "+p.nome, S({bold:true,sz:9}, rowBg, L, BINNER));
-
-    MK.forEach(function(mod, mi) {
+    var bg = ri%2===0 ? "#FFFFFF" : "#EBF5FB";
+    html += '<tr style="background:'+bg+'">';
+    html += td(ri+1, "font-family:Arial;font-size:9pt;text-align:center;border:1px solid #B0C8DC;padding:3px 5px;background:"+bg);
+    html += td("CP "+p.cp, "font-family:Arial;font-size:9pt;text-align:center;border:1px solid #B0C8DC;padding:3px 5px;background:"+bg);
+    html += td(p.grado, "font-family:Arial;font-size:9pt;border:1px solid #B0C8DC;padding:3px 5px;background:"+bg);
+    html += td(p.cognome+" "+p.nome, "font-family:Arial;font-size:9pt;font-weight:bold;border:1px solid #B0C8DC;padding:3px 5px;background:"+bg);
+    MK.forEach(function(mod) {
       var s   = getLatest(p.id, mod);
       var st  = (ms[mod]&&ms[mod].st)||"missing";
-      var fills = {ok:COLORS.ok, warning:COLORS.warn, expired:COLORS.exp, missing:COLORS.miss};
-      var texts = {ok:COLORS.okText, warning:COLORS.warnText, expired:COLORS.expText, missing:COLORS.missText};
-      var fill = fills[st], textCol = texts[st];
+      var cbg = BG[st], cfg = FG[st];
       var luogo = s ? (s.luogo&&s.luogo.trim()?s.luogo.trim():"PINEROLO") : "";
       var data  = s ? fmtDate(s.data) : "";
-
-      applyCell(r, 4+mi*2,   luogo, S({sz:8,color:{rgb:textCol}}, fill, {horizontal:"center",vertical:"center"}, BINNER));
-      applyCell(r, 4+mi*2+1, data,  S({sz:8,color:{rgb:textCol},bold:!!data}, fill, C, BINNER));
+      var cell  = "font-family:Arial;font-size:8pt;text-align:center;border:1px solid #B0C8DC;padding:3px 4px;background:"+cbg+";color:"+cfg;
+      html += td(luogo, cell);
+      html += td(data, cell+(data?";font-weight:bold":""));
     });
+    html += '</tr>';
   });
 
-  // ── LEGEND ROW ──
-  var lr = 3 + sorted.length;
-  applyCell(lr, 0, "", S({sz:9},{},{},{}));
-  applyCell(lr, 1, "LEGENDA:", S({bold:true,sz:9}, "F5F5F5", L, BINNER));
-  var legs = [
-    [COLORS.ok,   COLORS.okText,   "Valido"],
-    [COLORS.warn, COLORS.warnText, "In scad. \u226460gg"],
-    [COLORS.exp,  COLORS.expText,  "Scaduto"],
-    [COLORS.miss, COLORS.missText, "Non effettuato"],
-  ];
-  legs.forEach(function(lg, i) {
-    applyCell(lr, 2+i*2,   lg[2], S({bold:true,sz:9,color:{rgb:lg[1]}}, lg[0], C, BINNER));
-    applyCell(lr, 2+i*2+1, "",    S({sz:9}, lg[0], C, BINNER));
+  // Legend row
+  html += '<tr>';
+  html += '<td colspan="2" style="padding:4px;border:none"></td>';
+  html += '<td style="font-family:Arial;font-size:9pt;font-weight:bold;padding:5px 8px;border:1px solid #ccc">LEGENDA:</td>';
+  [["#C8E6C9","#1B5E20","Valido"],["#FFF9C4","#E65100","In scad. \u226460gg"],["#FFCDD2","#B71C1C","Scaduto"],["#ECEFF1","#546E7A","Non effettuato"]].forEach(function(l){
+    html += '<td colspan="2" style="background:'+l[0]+';color:'+l[1]+';font-family:Arial;font-size:9pt;font-weight:bold;text-align:center;border:1px solid #ccc;padding:4px 8px">'+l[2]+'</td>';
   });
-  for(var lc=10; lc<totalCols; lc++) applyCell(lr, lc, "", S({sz:9},"F5F5F5",{},{}));
+  html += '<td colspan="'+(totalCols-10)+'" style="border:none"></td></tr>';
 
-  XLSX.utils.book_append_sheet(wb, ws, "Lenzuolo Perenne");
-  XLSX.writeFile(wb, "LENZUOLONE EXCEL.xlsx", {cellStyles: true, bookSST: false});
+  html += '</table>';
+
+  // Create downloadable .xls file (Excel reads HTML tables natively)
+  var blob = new Blob([
+    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">',
+    '<head><meta charset="UTF-8">',
+    '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>',
+    '<x:Name>Lenzuolo Perenne</x:Name>',
+    '<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>',
+    '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->',
+    '</head><body>',
+    html,
+    '</body></html>'
+  ], {type: "application/vnd.ms-excel;charset=utf-8"});
+
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "LENZUOLONE EXCEL.xls";
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* INIT */
