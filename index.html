@@ -780,6 +780,14 @@ function _buildSchedaOverlay(pid, expandedMod) {
     agBtn.className="bp qa-trigger"; agBtn.dataset.pid=pid; agBtn.dataset.mod=mod;
     agBtn.style.cssText="font-size:10px;padding:3px 8px";
     agBtn.textContent="+ Aggiungi";
+    agBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var thisPid = this.dataset.pid;
+      var thisMod = this.dataset.mod;
+      var overlay = document.getElementById("scheda-overlay");
+      if(overlay) overlay.remove();
+      openQuickAdd(thisPid, thisMod);
+    });
     tr.lastElementChild.appendChild(agBtn);
 
     // Direct click listener on row to expand/collapse
