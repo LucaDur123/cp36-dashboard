@@ -1728,14 +1728,15 @@ function openPrint(pid){
         +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>Pistola: "+polCell+"<br>Fucile: "+polCell+"</td></tr>";
     } else {
+      var cellContent = a.isHtml ? a.text : a.text;
       rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
-        +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
+        +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+cellContent+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"+getCella(a.luogo)+"</td></tr>";
     }
   });
   var html="<!DOCTYPE html><html lang='it'><head><meta charset='UTF-8'>"
     +"<title>Scheda "+p.cognome+" "+p.nome+"</title>"
-    +"<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:9pt;}"
+    +"<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Times New Roman',Times,serif;font-size:9pt;}"
     +"@page{size:A4;margin:0.8cm 0.9cm}@media print{.np{display:none}body{margin:0}}"
     +"table{width:100%;border-collapse:collapse}td{font-size:9pt}</style></head><body>"
     +"<div style='text-align:center;margin-bottom:6px'>"
@@ -1848,7 +1849,7 @@ function openPrintAll(PS) {
     +"<title>Schede Approntamento - Personale Pronto</title>"
     +"<style>"
     +"*{box-sizing:border-box;margin:0;padding:0}"
-    +"body{font-family:Arial,sans-serif;font-size:9pt;}"
+    +"body{font-family:'Times New Roman',Times,serif;font-size:9pt;}"
     +"@page{size:A4;margin:0.8cm 0.9cm}"
     +"@media print{.np{display:none}.scheda-page{page-break-after:always}body{margin:0}}"
     +"table{width:100%;border-collapse:collapse}td{font-size:9pt}"
