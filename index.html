@@ -602,6 +602,12 @@ function getExp(mod,last,fD2,pD) {
   if(!last||!/^\d{4}-\d{2}-\d{2}$/.test(last)) return null;
   var cfg=MC[mod]; if(!cfg) return null;
   if(mod==="form_specifica") return last;
+  // PEFO special rule: valid for entire next calendar year
+  if(mod==="pefo"||mod==="agilita") {
+    var lastYear=parseInt(last.substring(0,4));
+    // Expires at end of the year after the year of last session
+    return (lastYear+1)+"-12-31";
+  }
   var base=last;
   if(mod==="poligono"&&fD2&&pD) {
     var g=Math.round((new Date(fD2)-new Date(pD))/86400000);
