@@ -1490,7 +1490,7 @@ function rStp(PS){
     +'<p style="color:#4a6a88;margin-bottom:12px;font-size:13px">Genera la scheda ufficiale pre-compilata. Luogo non specificato = <b>PINEROLO</b>.</p>'
     +'<div style="margin-bottom:14px"><button id="btn-print-all" class="bp" style="background:#639922;border-color:#4a7518;font-size:13px;padding:8px 20px">&#128424;Stampa tutte le schede pronti ('+nPronti+')</button></div>'
     +'<div class="filters"><input id="stp-q" placeholder="Cerca cognome..." style="width:190px"><select id="stp-cp"><option value="">Tutte CP</option>'+cpO+"</select></div>"
-    +'<div class="card" id="stp-table-card"><table><thead><tr><th>CP</th><th>Grado</th><th>Cognome Nome</th><th>Completamento scheda (15 attivita)</th><th></th></tr></thead><tbody>'+tb+"</tbody></table></div>";
+    +'<div class="card" id="stp-table-card"><table><thead><tr><th>CP</th><th>Grado</th><th>Cognome Nome</th><th>Completamento scheda</th><th></th></tr></thead><tbody>'+tb+"</tbody></table></div>";
   _bindSearch("stp-q","stp",function(){rStp(buildPS());});
   _bindSelect("stp-cp",function(){rStp(buildPS());});
   var btnAll=document.getElementById("btn-print-all");
