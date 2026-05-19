@@ -993,16 +993,22 @@ function _buildSchedaOverlay(pid, expandedMod) {
   printBtn.style.cssText="padding:5px 12px;font-size:12px;background:#5b9ec9;color:#fff;border:none;border-radius:5px;cursor:pointer";
   printBtn.innerHTML="&#128424; Stampa";
   printBtn.addEventListener("click",function(){openPrint(pid);});
+  var editBtn=document.createElement("button");
+  editBtn.style.cssText="padding:5px 12px;font-size:12px;background:#f0a030;color:#fff;border:none;border-radius:5px;cursor:pointer";
+  editBtn.innerHTML="&#9998; Modifica";
+  editBtn.addEventListener("click",function(){_openEditModal(pid);});
   var closeBtn=document.createElement("button");
   closeBtn.style.cssText="background:transparent;border:none;color:#a8d4f0;font-size:22px;cursor:pointer;padding:0 4px;line-height:1";
   closeBtn.innerHTML="&times;";
   closeBtn.addEventListener("click",function(){overlay.remove();});
-  btns.appendChild(printBtn); btns.appendChild(closeBtn);
+  btns.appendChild(printBtn); btns.appendChild(editBtn); btns.appendChild(closeBtn);
   hdr.appendChild(title); hdr.appendChild(btns);
 
   var hint=document.createElement("div");
   hint.style.cssText="background:#f0f6fb;padding:6px 18px;font-size:11px;color:#4a6a88;border-bottom:1px solid #c8ddef;flex-shrink:0";
-  hint.textContent="Clicca su una riga per vedere le sessioni e i periodi. Usa + Aggiungi per inserire una nuova sessione.";
+  var notaTxt = p.nota && p.nota.trim() ? p.nota.trim() : "";
+  hint.innerHTML = "Clicca su una riga per vedere le sessioni e i periodi. Usa + Aggiungi per inserire una nuova sessione."
+    + (notaTxt ? " &nbsp;|&nbsp; <b style='color:#1a5c99'>&#128221; Nota:</b> " + notaTxt : "");
 
   var body=document.createElement("div");
   body.style.cssText="overflow-y:auto;padding:0;flex:1";
@@ -1983,6 +1989,71 @@ function esportaExcel() {
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function _openEditModal(pid) {
+  var p=null; for(var i=0;i<personnel.length;i++) if(personnel[i].id===pid){p=personnel[i];break;}
+  if(!p) return;
+
+  var ex=document.getElementById("edit-modal-overlay"); if(ex) ex.remove();
+
+  var overlay=document.createElement("div");
+  overlay.id="edit-modal-overlay";
+  overlay.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,40,80,0.65);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box";
+
+  var box=document.createElement("div");
+  box.style.cssText="background:#fff;border-radius:12px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 8px 32px rgba(10,40,80,0.35)";
+
+  var hdr=document.createElement("div");
+  hdr.style.cssText="background:#1a3a5c;padding:12px 18px;color:#fff;font-weight:bold;font-size:14px";
+  hdr.textContent="Modifica — "+p.grado+" "+p.cognome+" "+p.nome;
+
+  var body=document.createElement("div");
+  body.style.cssText="padding:18px";
+
+  body.innerHTML=
+    '<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">CP</label>'
+    +'<input id="edit-cp" value="'+( p.cp||"")+'" style="width:100%;margin-bottom:12px">'
+    +'<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Grado</label>'
+    +'<input id="edit-grado" value="'+(p.grado||"")+'" style="width:100%;margin-bottom:12px">'
+    +'<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Nota</label>'
+    +'<textarea id="edit-nota" rows="3" style="width:100%;margin-bottom:16px;resize:vertical;font-family:Arial;font-size:13px;padding:6px;border:1px solid #c8ddef;border-radius:5px">'+(p.nota||"")+'</textarea>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button id="edit-save" style="flex:1;padding:9px;font-size:13px;font-weight:bold;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer">&#10003; Salva</button>'
+    +'<button id="edit-cancel" style="padding:9px 16px;font-size:13px;background:#f0f0f0;color:#333;border:none;border-radius:6px;cursor:pointer">Annulla</button>'
+    +'</div>';
+
+  box.appendChild(hdr); box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  document.getElementById("edit-cancel").addEventListener("click",function(){overlay.remove();});
+  overlay.addEventListener("click",function(e){if(e.target===overlay)overlay.remove();});
+
+  document.getElementById("edit-save").addEventListener("click",function(){
+    var newCp    = (document.getElementById("edit-cp").value||"").trim();
+    var newGrado = (document.getElementById("edit-grado").value||"").trim();
+    var newNota  = (document.getElementById("edit-nota").value||"").trim();
+    if(!newCp||!newGrado){alert("CP e Grado sono obbligatori.");return;}
+
+    // Update local
+    p.cp=newCp; p.grado=newGrado; p.nota=newNota;
+    personnel=sortPersonnel(personnel);
+    save();
+
+    // Update Supabase
+    (async function(){
+      try{
+        await sbPatch("personnel",p.id,{cp:newCp,grado:newGrado,nota:newNota});
+      }catch(e2){console.error("SB patch error:",e2);}
+    })();
+
+    overlay.remove();
+    // Refresh dashboard and reopen scheda modal
+    var vd=document.getElementById("view-dashboard");
+    if(vd&&vd.dataset.built){_refreshDashRows(buildPS());_refreshDashBanner(buildPS());}
+    _buildSchedaOverlay(pid, null);
+  });
 }
 
 /* INIT */
