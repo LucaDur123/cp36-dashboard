@@ -647,8 +647,9 @@ function pill(st) {
 }
 function pctSch(pid,PS) {
   var ms=PS[pid]||{}, done=0;
-  for(var i=0;i<SCHEDA.length;i++){var st=ms[SCHEDA[i].mod]&&ms[SCHEDA[i].mod].st;if(st==="ok"||st==="warning")done++;}
-  return Math.round(done/SCHEDA.length*100);
+  var mods=MK.filter(function(m){return m!=="fats";});
+  for(var i=0;i<mods.length;i++){var st=ms[mods[i]]&&ms[mods[i]].st;if(st==="ok"||st==="warning")done++;}
+  return Math.round(done/mods.length*100);
 }
 function el(id){return document.getElementById(id);}
 function val(id){var e=el(id);return e?e.value:"";}
