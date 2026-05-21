@@ -1,0 +1,25 @@
+{
+  "name": "Dashboard Preparazione All'Impiego - 36^ Cp",
+  "short_name": "36^ Cp Dashboard",
+  "description": "Dashboard preparazione all'impiego - 3° Reggimento Alpini - 36^ Cp",
+  "start_url": "/cp36-dashboard/",
+  "scope": "/cp36-dashboard/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a3a5c",
+  "theme_color": "#1a3a5c",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
