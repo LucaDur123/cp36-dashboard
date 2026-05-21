@@ -1793,8 +1793,10 @@ function openPrint(pid){
     +"</div>
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function(e){
-    console.log('SW registration failed:', e);
+  // Unregister old SW and register new one
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r){ r.unregister(); });
+    navigator.serviceWorker.register('sw.js');
   });
 }
 </script>
