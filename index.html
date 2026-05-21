@@ -275,7 +275,7 @@ var MK = Object.keys(MC);
 
 var SCHEDA = [
   {n:1, lab:"Controllo efficienza operativa PEFO (SCHEDA III)", mod:"pefo"},
-  {n:2, lab:"Idoneita al Servizio Militare Incondizionato", mod:"idoneita"},
+  {n:2, lab:"Scadenza Idoneita\u2019 al Servizio Militare Incondizionato", mod:"idoneita"},
   {n:3, lab:"Lezioni di tiro con arma lunga e corta - pubbl. 7006 ed. 2018 (SCHEDA II)", mod:"poligono", tiro:true},
   {n:4, lab:"Metodo di Combattimento Militare - MCM (SCHEDA IV)", mod:"mcm"},
   {n:5, lab:"Difesa CBRN (SCHEDA VII)", mod:"cbrn"},
@@ -1745,9 +1745,10 @@ function openPrint(pid){
         +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>Pistola: "+polCell+"<br>Fucile: "+polCell+"</td></tr>";
     } else {
       var cellContent = a.isHtml ? a.text : a.text;
+      var dateCell = a.luogo==="idoneita" ? getDataFmt("idoneita") : getCella(a.luogo);
       rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+cellContent+"</td>"
-        +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"+getCella(a.luogo)+"</td></tr>";
+        +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"+dateCell+"</td></tr>";
     }
   });
   var html="<!DOCTYPE html><html lang='it'><head><meta charset='UTF-8'>"
