@@ -601,6 +601,8 @@ function getExp(mod,last,fD2,pD) {
   if(!last||!/^\d{4}-\d{2}-\d{2}$/.test(last)) return null;
   var cfg=MC[mod]; if(!cfg) return null;
   if(mod==="form_specifica") return last;
+  // Idoneita: date entered IS the expiry date directly
+  if(mod==="idoneita") return last;
   // PEFO special rule: valid for entire next calendar year
   if(mod==="pefo"||mod==="agilita") {
     var lastYear=parseInt(last.substring(0,4));
@@ -878,16 +880,18 @@ function _buildSchedaOverlay(pid, expandedMod) {
     tr.style.cursor=nSess>0?"pointer":"default";
     tr.dataset.mod=mod; tr.dataset.pid=pid;
     tr.className="scheda-mod-row";
+    var col1Label = mod==="idoneita" ? (m.lat?fD(m.lat.data):"--") : (m.lat?fD(m.lat.data):"--");
+    var col1Style = mod==="idoneita" ? "padding:5px 8px;font-size:11px;font-family:monospace;color:#1a5c99;font-weight:bold" : "padding:5px 8px;font-size:11px;font-family:monospace";
     tr.innerHTML=
       '<td style="padding:5px 8px;font-weight:bold;font-size:12px;white-space:nowrap">'
         +'<span style="color:#5b9ec9;margin-right:4px;font-size:11px">'+expandIcon+'</span>'
         +MC[mod].label+'</td>'
-      +'<td style="padding:5px 8px;font-size:11px;font-family:monospace">'+(m.lat?fD(m.lat.data):"--")+'</td>'
+      +'<td style="'+col1Style+'">'+col1Label+'</td>'
       +'<td style="padding:5px 8px;font-size:11px">'+lu+'</td>'
       +'<td style="padding:5px 8px;font-size:11px;text-align:center">'
         +'<span style="color:'+(nSess>0?"#1a5c99":"#aaa")+';font-weight:'+(nSess>0?"bold":"normal")+'">'+sessLabel+'</span>'
       +'</td>'
-      +'<td style="padding:5px 8px;font-size:11px;font-family:monospace">'+(m.exp?fD(m.exp):"--")+" "+ds+'</td>'
+      +'<td style="padding:5px 8px;font-size:11px;font-family:monospace">'+(mod==="idoneita"?"<span style='color:#7a9ab8;font-size:10px;font-style:italic'>= data ins.</span>":(m.exp?fD(m.exp):"--")+" "+ds)+'</td>'
       +'<td style="padding:5px 8px"><span class="badge '+cls+'">'+SL[m.st||"missing"]+'</span></td>'
       +'<td style="padding:5px 4px;text-align:center;white-space:nowrap"></td>';
 
@@ -1017,7 +1021,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
   var thead=document.createElement("thead");
   thead.innerHTML='<tr style="background:#daeaf7;border-bottom:2px solid #a0c4e8;position:sticky;top:0">'
     +'<th style="padding:7px 8px;text-align:left;font-size:11px">Modulo</th>'
-    +'<th style="padding:7px 8px;font-size:11px;text-align:center">Ultima sessione</th>'
+    +'<th style="padding:7px 8px;font-size:11px;text-align:center">Ultima sess. / Scadenza</th>'
     +'<th style="padding:7px 8px;font-size:11px">Luogo</th>'
     +'<th style="padding:7px 8px;font-size:11px;text-align:center">Sessioni / Periodi</th>'
     +'<th style="padding:7px 8px;font-size:11px;text-align:center">Scade il</th>'
