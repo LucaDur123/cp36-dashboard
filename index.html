@@ -163,14 +163,6 @@ footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1p
 }
 </style>
   <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a3a5c">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="36^ Cp">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 </head>
 <body>
 <div id="app-header">
@@ -1789,18 +1781,10 @@ function openPrint(pid){
     +"<div>Col. f. (alp.) t.ISSMI Emanuele Piero DE MITRI</div>"
     +"<div style='height:1.4cm'></div></div>"
     +"<div class='np' style='text-align:center;margin-top:10px'>"
-    +"<button onclick='window.print()' style='padding:8px 28px;font-size:11pt;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer'>Stampa / Salva PDF</button>"
-    +"</div>
-<script>
-if ('serviceWorker' in navigator) {
-  // Unregister old SW and register new one
-  navigator.serviceWorker.getRegistrations().then(function(regs) {
-    regs.forEach(function(r){ r.unregister(); });
-    navigator.serviceWorker.register('sw.js');
-  });
-}
-</script>
-</body></html>";
+    +"<button onclick=\'window.print()\' style=\'padding:8px 28px;font-size:11pt;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer\'>&#128424; Stampa / Salva PDF</button>"
+    +"</div>"
+
+    +"</body></html>";
   var w=window.open("","_blank","width=900,height=720,scrollbars=yes");
   if(w){w.document.write(html);w.document.close();}
   else alert("Popup bloccato. Abilita i popup e riprova.");
