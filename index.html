@@ -950,36 +950,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
         tr.lastElementChild.appendChild(fatsInfo);
       }
     }
-    // FATS button for poligono and pb
-    if(mod==="poligono"||mod==="pb") {
-      var fatsMod = mod==="poligono" ? "fats_arx" : "fats_pb";
-      var polDate = m.lat ? new Date(m.lat.data) : null;
-      var today = new Date();
-      var daysSincePol = polDate ? Math.round((today-polDate)/86400000) : 999;
-      var fatsMs = ms[fatsMod]||{};
-      var fatsLat = fatsMs.lat||null;
-      // Check if FATS already used in this cycle (fats done after last poligono)
-      var fatsUsed = fatsLat && polDate && new Date(fatsLat.data) >= polDate;
-      // Show FATS button only if poligono done within 180 days and FATS not yet used
-      if(daysSincePol>=0 && daysSincePol<=180 && !fatsUsed) {
-        var fatsBtn=document.createElement("button");
-        fatsBtn.style.cssText="font-size:10px;padding:3px 8px;margin-left:4px;background:#e8f4ff;color:#1a5c99;border:1px solid #a0c4e8;border-radius:4px;cursor:pointer;font-weight:bold";
-        fatsBtn.textContent="+ FATS";
-        fatsBtn.title="Aggiungi sessione FATS (estende validità di 6 mesi)";
-        fatsBtn.addEventListener("click",function(e){
-          e.stopPropagation();
-          var overlay=document.getElementById("scheda-overlay");
-          if(overlay) overlay.remove();
-          openQuickAdd(pid, fatsMod);
-        });
-        tr.lastElementChild.appendChild(fatsBtn);
-      } else if(fatsUsed) {
-        var fatsInfo=document.createElement("span");
-        fatsInfo.style.cssText="font-size:10px;color:#639922;margin-left:6px;white-space:nowrap";
-        fatsInfo.textContent="✓ FATS: "+fD(fatsLat.data);
-        tr.lastElementChild.appendChild(fatsInfo);
-      }
-    }
+    
 
     // Direct click listener on row to expand/collapse
     (function(currentMod, currentTr, hasSess) {
