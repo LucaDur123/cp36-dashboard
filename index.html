@@ -1047,6 +1047,56 @@ function _buildSchedaOverlay(pid, expandedMod) {
         +'</td>'
         +'<td colspan="3"></td>';
       tbody.appendChild(totRow);
+
+      // Show FATS sessions if this is poligono or pb
+      if(mod==="poligono"||mod==="pb") {
+        var fatsMod2 = mod==="poligono"?"fats_arx":"fats_pb";
+        var fatsSessions = sessions.filter(function(s){return s.pid===pid&&s.modulo===fatsMod2;})
+          .sort(function(a,b){return b.data>a.data?1:-1;});
+        if(fatsSessions.length>0) {
+          var fatsHdr=document.createElement("tr");
+          fatsHdr.style.cssText="background:#d0e8f0;border-left:4px solid #1a7a9a";
+          fatsHdr.innerHTML='<td colspan="7" style="padding:3px 8px 3px 24px;font-size:11px;font-weight:bold;color:#1a3a5c">Sessioni FATS associate</td>';
+          tbody.appendChild(fatsHdr);
+
+          fatsSessions.forEach(function(sess2, si2) {
+            var str2=document.createElement("tr");
+            str2.style.cssText="background:#e0f4f8;border-left:4px solid #1a7a9a";
+            var sessDate2=fD(sess2.data);
+            var luogo2=sess2.luogo&&sess2.luogo.trim()?sess2.luogo.trim():"PINEROLO";
+            var per2=sess2.periodi||1;
+            str2.innerHTML='<td style="padding:3px 8px 3px 32px;font-size:11px;color:#1a5c7a" colspan="2">'
+              +'<b style="color:#1a3a5c">'+(si2+1)+'.&nbsp;</b>'
+              +'<span style="font-family:monospace">'+sessDate2+'</span>'
+              +'</td>'
+              +'<td style="padding:3px 8px;font-size:11px;color:#1a5c7a">'+luogo2+'</td>'
+              +'<td style="padding:3px 8px;font-size:11px;text-align:center">'
+                +'<span style="background:#d0f0e0;color:#1a5c3a;border-radius:4px;padding:1px 7px;font-weight:bold">'+per2+' per.</span>'
+              +'</td>'
+              +'<td colspan="2"></td>'
+              +'<td style="padding:3px 4px;text-align:center"></td>';
+            var delBtn2=document.createElement("button");
+            delBtn2.className="del-sess-btn";
+            delBtn2.dataset.sessId=sess2.id; delBtn2.dataset.pid=pid; delBtn2.dataset.mod=fatsMod2;
+            delBtn2.style.cssText="font-size:10px;padding:2px 6px;background:#fff0f0;color:#c0392b;border:1px solid #e8b4b4;border-radius:4px;cursor:pointer;font-weight:bold";
+            delBtn2.textContent="✕ Elimina";
+            delBtn2.addEventListener("click",function(e){
+              e.stopPropagation();
+              var sid2=parseInt(this.dataset.sessId);
+              var thisPid2=this.dataset.pid;
+              var thisMod2=this.dataset.mod;
+              if(!confirm("Eliminare questa sessione FATS?")) return;
+              sessions=sessions.filter(function(s){return s.id!==sid2;});
+              save();
+              (async function(){try{await sbDelete("sessions","id=eq."+sid2);}catch(e2){console.error("SB:",e2);}})();
+              _refreshDashRows(buildPS());
+              _buildSchedaOverlay(thisPid2, mod);
+            });
+            str2.lastElementChild.appendChild(delBtn2);
+            tbody.appendChild(str2);
+          });
+        }
+      }
     }
   });
 
@@ -1811,10 +1861,18 @@ function openPrint(pid){
   var rowsHtml="";
   ACTS.forEach(function(a){
     if(a.tiro){
-      var polCell=getCella("poligono");
+      var polArxCell=getCella("poligono");
+      var polPbCell=getCella("pb");
+      var fatsArxSess=gs("fats_arx");
+      var fatsPbSess=gs("fats_pb");
+      var fatsArxLine=fatsArxSess?"<br><small style='color:#444;font-size:8pt'>FATS: "+(fatsArxSess.luogo&&fatsArxSess.luogo.trim()?fatsArxSess.luogo.trim():"PINEROLO")+" - "+getDataFmt("fats_arx")+"</small>":"";
+      var fatsPbLine=fatsPbSess?"<br><small style='color:#444;font-size:8pt'>FATS: "+(fatsPbSess.luogo&&fatsPbSess.luogo.trim()?fatsPbSess.luogo.trim():"PINEROLO")+" - "+getDataFmt("fats_pb")+"</small>":"";
       rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
-        +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>Pistola: "+polCell+"<br>Fucile: "+polCell+"</td></tr>";
+        +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"
+        +"Pistola: "+polArxCell+fatsArxLine
+        +"<br>Fucile: "+polPbCell+fatsPbLine
+        +"</td></tr>";
     } else {
       var cellContent = a.isHtml ? a.text : a.text;
       var dateCell = a.luogo==="idoneita" ? getDataFmt("idoneita") : getCella(a.luogo);
