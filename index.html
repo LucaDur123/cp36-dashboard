@@ -598,24 +598,25 @@ function todayIT() {
   var n=new Date(), mn=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
   return n.getDate()+" "+mn[n.getMonth()]+" "+n.getFullYear();
 }
-function getExp(mod,last,fD2,pD) {
+function getExp(mod,last,fatsDate) {
   if(!last||!/^\d{4}-\d{2}-\d{2}$/.test(last)) return null;
   var cfg=MC[mod]; if(!cfg) return null;
   if(mod==="form_specifica") return last;
-  // Idoneita: date entered IS the expiry date directly
   if(mod==="idoneita") return last;
-  // PEFO special rule: valid for entire next calendar year
   if(mod==="pefo"||mod==="agilita") {
     var lastYear=parseInt(last.substring(0,4));
-    // Expires at end of the year after the year of last session
     return (lastYear+1)+"-12-31";
   }
-  var base=last;
-  if(mod==="poligono"&&fD2&&pD) {
-    var g=Math.round((new Date(fD2)-new Date(pD))/86400000);
-    if(g>=0&&g<=180) base=fD2;
+  // Poligono ARX or PB: check if FATS extends validity
+  if((mod==="poligono"||mod==="pb")&&fatsDate) {
+    var polDate=new Date(last), fDate=new Date(fatsDate);
+    var daysSincePol=Math.round((fDate-polDate)/86400000);
+    // FATS valid only if done within 180 days of poligono
+    if(daysSincePol>=0&&daysSincePol<=180) {
+      return addDays(fatsDate, 180);
+    }
   }
-  return addDays(base,cfg.g);
+  return addDays(last, cfg.g);
 }
 function getSt(exp) {
   if(!exp) return "missing";
@@ -626,15 +627,23 @@ function buildPS() {
   var map={};
   for(var i=0;i<personnel.length;i++) {
     var p=personnel[i], ms={};
-    for(var j=0;j<MK.length;j++) {
-      var mod=MK[j];
+    // Get FATS sessions for this person
+    var fatsArxSess=sessions.filter(function(x){return x.pid===p.id&&x.modulo==="fats_arx";}).sort(function(a,b){return b.data>a.data?1:-1;})[0];
+    var fatsPbSess =sessions.filter(function(x){return x.pid===p.id&&x.modulo==="fats_pb"; }).sort(function(a,b){return b.data>a.data?1:-1;})[0];
+    // Also check old 'fats' module for backward compatibility
+    var fatsOld=sessions.filter(function(x){return x.pid===p.id&&x.modulo==="fats";}).sort(function(a,b){return b.data>a.data?1:-1;})[0];
+    var fatsArxDate=fatsArxSess?fatsArxSess.data:(fatsOld?fatsOld.data:null);
+    var fatsPbDate =fatsPbSess ?fatsPbSess.data :(fatsOld?fatsOld.data:null);
+
+    var allMods = Object.keys(MC);
+    for(var j=0;j<allMods.length;j++) {
+      var mod=allMods[j];
       var s=sessions.filter(function(x){return x.pid===p.id&&x.modulo===mod;}).sort(function(a,b){return b.data>a.data?1:-1;});
       var lat=s[0]||null;
       var tot=s.reduce(function(a,x){return a+(x.periodi||1);},0);
-      var fS=sessions.filter(function(x){return x.pid===p.id&&x.modulo==="fats";}).sort(function(a,b){return b.data>a.data?1:-1;})[0];
-      var pS=sessions.filter(function(x){return x.pid===p.id&&x.modulo==="poligono";}).sort(function(a,b){return b.data>a.data?1:-1;})[0];
-      var exp=getExp(mod,lat?lat.data:null,fS?fS.data:null,pS?pS.data:null);
-      ms[mod]={lat:lat,exp:exp,st:getSt(exp),tot:tot,hist:s};
+      var fatsDate = mod==="poligono" ? fatsArxDate : (mod==="pb" ? fatsPbDate : null);
+      var exp=getExp(mod,lat?lat.data:null,fatsDate);
+      ms[mod]={lat:lat,exp:exp,st:getSt(exp),tot:tot,hist:s,fatsDate:fatsDate};
     }
     map[p.id]=ms;
   }
@@ -909,6 +918,68 @@ function _buildSchedaOverlay(pid, expandedMod) {
       openQuickAdd(thisPid, thisMod);
     });
     tr.lastElementChild.appendChild(agBtn);
+
+
+    // FATS button for poligono and pb
+    if(mod==="poligono"||mod==="pb") {
+      var fatsMod = mod==="poligono" ? "fats_arx" : "fats_pb";
+      var polDate = m.lat ? new Date(m.lat.data) : null;
+      var today2 = new Date();
+      var daysSincePol = polDate ? Math.round((today2-polDate)/86400000) : 999;
+      var fatsMs = ms[fatsMod]||{};
+      var fatsLat2 = fatsMs.lat||null;
+      var fatsUsed = fatsLat2 && polDate && new Date(fatsLat2.data) >= polDate;
+      if(daysSincePol>=0 && daysSincePol<=180 && !fatsUsed) {
+        var fatsBtn=document.createElement("button");
+        fatsBtn.style.cssText="font-size:10px;padding:3px 8px;margin-left:4px;background:#e8f4ff;color:#1a5c99;border:1px solid #a0c4e8;border-radius:4px;cursor:pointer;font-weight:bold";
+        fatsBtn.textContent="+ FATS";
+        fatsBtn.title="Aggiungi sessione FATS (estende validità di 6 mesi)";
+        (function(pm, fm){
+          fatsBtn.addEventListener("click",function(e){
+            e.stopPropagation();
+            var ov=document.getElementById("scheda-overlay");
+            if(ov) ov.remove();
+            openQuickAdd(pid, fm);
+          });
+        })(mod, fatsMod);
+        tr.lastElementChild.appendChild(fatsBtn);
+      } else if(fatsUsed && fatsLat2) {
+        var fatsInfo=document.createElement("span");
+        fatsInfo.style.cssText="font-size:10px;color:#639922;margin-left:6px;white-space:nowrap";
+        fatsInfo.textContent="✓ FATS: "+fD(fatsLat2.data);
+        tr.lastElementChild.appendChild(fatsInfo);
+      }
+    }
+    // FATS button for poligono and pb
+    if(mod==="poligono"||mod==="pb") {
+      var fatsMod = mod==="poligono" ? "fats_arx" : "fats_pb";
+      var polDate = m.lat ? new Date(m.lat.data) : null;
+      var today = new Date();
+      var daysSincePol = polDate ? Math.round((today-polDate)/86400000) : 999;
+      var fatsMs = ms[fatsMod]||{};
+      var fatsLat = fatsMs.lat||null;
+      // Check if FATS already used in this cycle (fats done after last poligono)
+      var fatsUsed = fatsLat && polDate && new Date(fatsLat.data) >= polDate;
+      // Show FATS button only if poligono done within 180 days and FATS not yet used
+      if(daysSincePol>=0 && daysSincePol<=180 && !fatsUsed) {
+        var fatsBtn=document.createElement("button");
+        fatsBtn.style.cssText="font-size:10px;padding:3px 8px;margin-left:4px;background:#e8f4ff;color:#1a5c99;border:1px solid #a0c4e8;border-radius:4px;cursor:pointer;font-weight:bold";
+        fatsBtn.textContent="+ FATS";
+        fatsBtn.title="Aggiungi sessione FATS (estende validità di 6 mesi)";
+        fatsBtn.addEventListener("click",function(e){
+          e.stopPropagation();
+          var overlay=document.getElementById("scheda-overlay");
+          if(overlay) overlay.remove();
+          openQuickAdd(pid, fatsMod);
+        });
+        tr.lastElementChild.appendChild(fatsBtn);
+      } else if(fatsUsed) {
+        var fatsInfo=document.createElement("span");
+        fatsInfo.style.cssText="font-size:10px;color:#639922;margin-left:6px;white-space:nowrap";
+        fatsInfo.textContent="✓ FATS: "+fD(fatsLat.data);
+        tr.lastElementChild.appendChild(fatsInfo);
+      }
+    }
 
     // Direct click listener on row to expand/collapse
     (function(currentMod, currentTr, hasSess) {
@@ -1834,9 +1905,17 @@ function openPrintAll(PS) {
     ACTS.forEach(function(a){
       if(a.tiro){
         var polCell=getCella("poligono");
+      var pbCell=getCella("pb");
+      var fatsArxS=gs("fats_arx")||gs("fats");
+      var fatsPbS=gs("fats_pb")||gs("fats");
+      var fatsArxCell=fatsArxS?(getLuogo("fats_arx")||getLuogo("fats"))+" - "+(getDataFmt("fats_arx")||getDataFmt("fats")):"";
+      var fatsPbCell=fatsPbS?(getLuogo("fats_pb")||getLuogo("fats"))+" - "+(getDataFmt("fats_pb")||getDataFmt("fats")):"";
         rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
           +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
-          +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>Pistola: "+polCell+"<br>Fucile: "+polCell+"</td></tr>";
+          +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"
+          +"Pistola: "+polCell+(fatsArxCell?"<br><small style='color:#555'>FATS: "+fatsArxCell+"</small>":"")
+          +"<br>Fucile: "+pbCell+(fatsPbCell?"<br><small style='color:#555'>FATS: "+fatsPbCell+"</small>":"")
+          +"</td></tr>";
       } else {
         rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
           +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
