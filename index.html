@@ -2143,10 +2143,18 @@ function _openEditModal(pid) {
   body.style.cssText="padding:18px";
 
   body.innerHTML=
-    '<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">CP</label>'
-    +'<input id="edit-cp" value="'+( p.cp||"")+'" style="width:100%;margin-bottom:12px">'
-    +'<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Grado</label>'
-    +'<input id="edit-grado" value="'+(p.grado||"")+'" style="width:100%;margin-bottom:12px">'
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
+    +'<div><label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Cognome</label>'
+    +'<input id="edit-cognome" value="'+(p.cognome||"")+'" style="width:100%"></div>'
+    +'<div><label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Nome</label>'
+    +'<input id="edit-nome" value="'+(p.nome||"")+'" style="width:100%"></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
+    +'<div><label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Grado</label>'
+    +'<input id="edit-grado" value="'+(p.grado||"")+'" style="width:100%"></div>'
+    +'<div><label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">CP</label>'
+    +'<input id="edit-cp" value="'+(p.cp||"")+'" style="width:100%"></div>'
+    +'</div>'
     +'<label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Nota</label>'
     +'<textarea id="edit-nota" rows="3" style="width:100%;margin-bottom:16px;resize:vertical;font-family:Arial;font-size:13px;padding:6px;border:1px solid #c8ddef;border-radius:5px">'+(p.nota||"")+'</textarea>'
     +'<div style="display:flex;gap:8px">'
@@ -2162,20 +2170,22 @@ function _openEditModal(pid) {
   overlay.addEventListener("click",function(e){if(e.target===overlay)overlay.remove();});
 
   document.getElementById("edit-save").addEventListener("click",function(){
+    var newCognome = (document.getElementById("edit-cognome").value||"").trim().toUpperCase();
+    var newNome  = (document.getElementById("edit-nome").value||"").trim();
     var newCp    = (document.getElementById("edit-cp").value||"").trim();
     var newGrado = (document.getElementById("edit-grado").value||"").trim();
     var newNota  = (document.getElementById("edit-nota").value||"").trim();
-    if(!newCp||!newGrado){alert("CP e Grado sono obbligatori.");return;}
+    if(!newCognome||!newNome||!newCp||!newGrado){alert("Tutti i campi sono obbligatori tranne la nota.");return;}
 
     // Update local
-    p.cp=newCp; p.grado=newGrado; p.nota=newNota;
+    p.cognome=newCognome; p.nome=newNome; p.cp=newCp; p.grado=newGrado; p.nota=newNota;
     personnel=sortPersonnel(personnel);
     save();
 
     // Update Supabase
     (async function(){
       try{
-        await sbPatch("personnel",p.id,{cp:newCp,grado:newGrado,nota:newNota});
+        await sbPatch("personnel",p.id,{cognome:newCognome,nome:newNome,cp:newCp,grado:newGrado,nota:newNota});
       }catch(e2){console.error("SB patch error:",e2);}
     })();
 
