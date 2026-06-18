@@ -2385,7 +2385,7 @@ async function rAdmin() {
       +'<td style="padding:6px 10px;font-size:12px;font-family:monospace;color:#4a6a88">'+u.id.substring(0,8)+'...</td>'
       +'<td style="padding:6px 10px;font-size:12px">'+(u.full_name||'—')+'</td>'
       +'<td style="padding:6px 10px">'
-      +'<select onchange="changeRole(''+u.id+'',this.value)" style="font-size:12px;padding:3px 6px;border:1px solid #c8ddef;border-radius:4px">'+roleOpts+'</select>'
+      +'<select onchange="changeRole(\''+u.id+'\',this.value)" style="font-size:12px;padding:3px 6px;border:1px solid #c8ddef;border-radius:4px">'+roleOpts+'</select>'
       +'</td></tr>';
   }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#aaa">Nessun utente registrato.</td></tr>';
 
