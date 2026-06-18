@@ -955,6 +955,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
     agBtn.className="bp qa-trigger"; agBtn.dataset.pid=pid; agBtn.dataset.mod=mod;
     agBtn.style.cssText="font-size:10px;padding:3px 8px";
     agBtn.textContent="+ Aggiungi";
+    if(!canEdit()) agBtn.style.display='none';
     agBtn.addEventListener("click", function(e) {
       e.stopPropagation();
       var thisPid = this.dataset.pid;
@@ -979,6 +980,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
         var fatsBtn=document.createElement("button");
         fatsBtn.style.cssText="font-size:10px;padding:3px 8px;margin-left:4px;background:#e8f4ff;color:#1a5c99;border:1px solid #a0c4e8;border-radius:4px;cursor:pointer;font-weight:bold";
         fatsBtn.textContent="+ FATS";
+        if(!canEdit()) fatsBtn.style.display='none';
         fatsBtn.title="Aggiungi sessione FATS (estende validità di 6 mesi)";
         (function(pm, fm){
           fatsBtn.addEventListener("click",function(e){
@@ -1036,6 +1038,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
         delBtn.dataset.sessId=sess.id; delBtn.dataset.pid=pid; delBtn.dataset.mod=mod;
         delBtn.style.cssText="font-size:10px;padding:2px 8px;background:#fff0f0;color:#c0392b;border:1px solid #e8b4b4;border-radius:4px;cursor:pointer;font-weight:bold";
         delBtn.textContent="\u2715 Elimina";
+        if(!canEdit()) delBtn.style.display='none';
 
         delBtn.addEventListener("click", function(e) {
           e.stopPropagation();
@@ -1140,6 +1143,7 @@ function _buildSchedaOverlay(pid, expandedMod) {
   editBtn.style.cssText="padding:5px 12px;font-size:12px;background:#f0a030;color:#fff;border:none;border-radius:5px;cursor:pointer";
   editBtn.innerHTML="&#9998; Modifica";
   editBtn.addEventListener("click",function(){_openEditModal(pid);});
+  if(!canEdit()) editBtn.style.display='none';
   var closeBtn=document.createElement("button");
   closeBtn.style.cssText="background:transparent;border:none;color:#a8d4f0;font-size:22px;cursor:pointer;padding:0 4px;line-height:1";
   closeBtn.innerHTML="&times;";
