@@ -162,9 +162,44 @@ footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1p
   }
 }
 </style>
-  <!-- PWA -->
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#1a3a5c;z-index:10000;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.35);margin:16px">
+    <div style="background:#1a3a5c;padding:20px 24px;text-align:center">
+      <div style="color:#fff;font-weight:bold;font-size:16px;letter-spacing:0.5px">DASHBOARD PREPARAZIONE ALL&rsquo;IMPIEGO</div>
+      <div style="color:#a8d4f0;font-size:12px;margin-top:4px">3° Reggimento Alpini</div>
+    </div>
+    <div id="login-form" style="padding:24px">
+      <div style="font-size:13px;font-weight:bold;color:#1a3a5c;margin-bottom:16px;text-align:center">Accedi al sistema</div>
+      <label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Email</label>
+      <input id="auth-email" type="email" placeholder="email@esempio.com" style="width:100%;margin-bottom:12px;padding:8px 10px;border:1px solid #c8ddef;border-radius:6px;font-size:13px">
+      <label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Password</label>
+      <input id="auth-password" type="password" placeholder="Password" style="width:100%;margin-bottom:16px;padding:8px 10px;border:1px solid #c8ddef;border-radius:6px;font-size:13px">
+      <div id="auth-error" style="display:none;color:#a32d2d;font-size:12px;margin-bottom:12px;background:#fff0f0;padding:8px 10px;border-radius:5px;border:1px solid #f09595"></div>
+      <button id="btn-login" onclick="doLogin()" style="width:100%;padding:10px;font-size:13px;font-weight:bold;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px">Accedi</button>
+      <div style="text-align:center;font-size:11px;color:#7a9ab8">Non hai un account? <span onclick="showRegister()" style="color:#1a5c99;cursor:pointer;text-decoration:underline">Registrati</span></div>
+    </div>
+    <div id="register-form" style="display:none;padding:24px">
+      <div style="font-size:13px;font-weight:bold;color:#1a3a5c;margin-bottom:16px;text-align:center">Crea account</div>
+      <label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Nome completo</label>
+      <input id="reg-name" type="text" placeholder="Nome Cognome" style="width:100%;margin-bottom:12px;padding:8px 10px;border:1px solid #c8ddef;border-radius:6px;font-size:13px">
+      <label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Email</label>
+      <input id="reg-email" type="email" placeholder="email@esempio.com" style="width:100%;margin-bottom:12px;padding:8px 10px;border:1px solid #c8ddef;border-radius:6px;font-size:13px">
+      <label style="font-size:11px;color:#3a6a9a;display:block;margin-bottom:3px">Password</label>
+      <input id="reg-password" type="password" placeholder="Minimo 6 caratteri" style="width:100%;margin-bottom:16px;padding:8px 10px;border:1px solid #c8ddef;border-radius:6px;font-size:13px">
+      <div id="reg-error" style="display:none;color:#a32d2d;font-size:12px;margin-bottom:12px;background:#fff0f0;padding:8px 10px;border-radius:5px;border:1px solid #f09595"></div>
+      <div id="reg-success" style="display:none;color:#1a5c1a;font-size:12px;margin-bottom:12px;background:#f0fff0;padding:8px 10px;border-radius:5px;border:1px solid #90c090"></div>
+      <button onclick="doRegister()" style="width:100%;padding:10px;font-size:13px;font-weight:bold;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer;margin-bottom:10px">Crea account</button>
+      <div style="text-align:center;font-size:11px;color:#7a9ab8">Hai già un account? <span onclick="showLogin()" style="color:#1a5c99;cursor:pointer;text-decoration:underline">Accedi</span></div>
+    </div>
+  </div>
+</div>
+
 <div id="app-header">
   <!-- TOP BAR: title + stemmi -->
   <div style="background:#1a3a5c;display:flex;align-items:center;justify-content:space-between;padding:6px 16px;min-height:56px">
@@ -180,6 +215,12 @@ footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1p
     <button onclick="showView('gestione')" id="nav-gestione">Gestione</button>
     <button onclick="showView('piani')" id="nav-piani">Piani di Lezione</button>
     <button onclick="showView('stampa')" id="nav-stampa">Stampa Scheda</button>
+    <button onclick="showView('admin')" id="nav-admin" style="display:none">&#9881; Admin</button>
+    <div id="nav-user-info" style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <span id="nav-user-email" style="font-size:11px;color:#a8d4f0;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <span id="nav-user-role" style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:bold"></span>
+      <button onclick="doLogout()" style="padding:4px 12px;font-size:11px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;cursor:pointer;color:#fff">Esci</button>
+    </div>
   </div>
 </div>
 <div id="loading-screen" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:#1a3a5c;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
@@ -197,6 +238,7 @@ footer{text-align:center;padding:10px;font-size:10px;color:#7a9ab8;border-top:1p
   <div id="view-stampa" style="display:none"></div>
   <div id="view-gestione" style="display:none"></div>
   <div id="view-piani" style="display:none"></div>
+  <div id="view-admin" style="display:none"></div>
 </main>
 <footer style="text-align:center;padding:10px;font-size:10px;color:#7a9ab8;background:#f0f6fb;border-top:1px solid #c8ddef;margin-top:8px">Progettato dal Ten. Luca Duranti &copy;2026</footer>
 <script>
@@ -691,6 +733,7 @@ function render(v) {
   else if(v==="stampa") rStp(PS);
   else if(v==="gestione") rGest();
   else if(v==="piani") rPiani();
+  else if(v==="admin") rAdmin();
 }
 
 /* DASHBOARD */
@@ -1339,6 +1382,7 @@ function _rInsRefresh() {
 function _rInsList() { _rInsRefresh(); }
 
 function doIns(){
+  if(!canEdit()){alert('Non hai i permessi per inserire dati.');return;}
   var mod=val("ins-mod"),data=val("ins-data"),lg=val("ins-luogo"),per=parseInt(val("ins-per"))||1;
   var pianoLink=(val("ins-piano-link")||"").trim();
   var pianoNote=(val("ins-piano-note")||"").trim();
@@ -1739,6 +1783,7 @@ function gestDelSelected(){
   rGest();
 }
 function addP(){
+  if(!canEdit()){alert('Non hai i permessi per modificare i dati.');return;}
   var cog=(val("gcog")||"").trim().toUpperCase(),nom=(val("gnom")||"").trim(),gra=(val("ggra")||"").trim(),cp=(val("gcp")||"36").trim(),pos=(val("gpos")||"").trim(),pl=(val("gpl")||"").trim();
   if(!cog||!nom||!gra){alert("Cognome, nome e grado sono obbligatori.");return;}
   var nId=String(Math.max.apply(null,personnel.map(function(x){return Number(x.id)||0;}))+1);
@@ -2206,7 +2251,183 @@ document.addEventListener("click", function(e){
   var printBtn=e.target.closest("[data-pid].bs");
   if(printBtn){openPrint(printBtn.dataset.pid);return;}
 });
-loadFromSupabase();
+
+// ===== SUPABASE AUTH =====
+var _supabase = null;
+var _currentUser = null;
+var _currentRole = null;
+
+function getSupabaseClient() {
+  if (!_supabase) {
+    _supabase = supabase.createClient(SB_URL, SB_KEY);
+  }
+  return _supabase;
+}
+
+function showLogin() {
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('register-form').style.display = 'none';
+}
+
+function showRegister() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+}
+
+function showAuthError(id, msg) {
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  var email = (document.getElementById('auth-email').value || '').trim();
+  var password = document.getElementById('auth-password').value || '';
+  document.getElementById('auth-error').style.display = 'none';
+  if (!email || !password) { showAuthError('auth-error', 'Inserisci email e password.'); return; }
+  var btn = document.getElementById('btn-login');
+  btn.textContent = 'Accesso in corso...'; btn.disabled = true;
+  try {
+    var sb = getSupabaseClient();
+    var res = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (res.error) { showAuthError('auth-error', res.error.message); btn.textContent = 'Accedi'; btn.disabled = false; return; }
+    await onLoginSuccess(res.data.user);
+  } catch(e) {
+    showAuthError('auth-error', 'Errore di connessione.'); btn.textContent = 'Accedi'; btn.disabled = false;
+  }
+}
+
+async function doRegister() {
+  var name = (document.getElementById('reg-name').value || '').trim();
+  var email = (document.getElementById('reg-email').value || '').trim();
+  var password = document.getElementById('reg-password').value || '';
+  document.getElementById('reg-error').style.display = 'none';
+  document.getElementById('reg-success').style.display = 'none';
+  if (!name || !email || !password) { showAuthError('reg-error', 'Tutti i campi sono obbligatori.'); return; }
+  if (password.length < 6) { showAuthError('reg-error', 'La password deve essere di almeno 6 caratteri.'); return; }
+  try {
+    var sb = getSupabaseClient();
+    var res = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
+    if (res.error) { showAuthError('reg-error', res.error.message); return; }
+    // Crea profilo manualmente (nessun trigger)
+    var uid = res.data.user.id;
+    await fetch(SB_URL + '/rest/v1/profiles', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ id: uid, full_name: name, role: 'viewer' })
+    });
+    var ok = document.getElementById('reg-success');
+    ok.textContent = 'Account creato. Accedi con le tue credenziali.';
+    ok.style.display = 'block';
+    setTimeout(function() { showLogin(); }, 2000);
+  } catch(e) {
+    showAuthError('reg-error', 'Errore durante la registrazione.');
+  }
+}
+
+async function onLoginSuccess(user) {
+  _currentUser = user;
+  // Recupera ruolo
+  try {
+    var sb = getSupabaseClient();
+    var res = await sb.from('profiles').select('role, full_name').eq('id', user.id).single();
+    _currentRole = (res.data && res.data.role) ? res.data.role : 'viewer';
+  } catch(e) {
+    _currentRole = 'viewer';
+  }
+  // Aggiorna UI
+  document.getElementById('nav-user-email').textContent = user.email;
+  var roleColors = { admin: '#e8a020', editor: '#639922', viewer: '#5b9ec9' };
+  var roleEl = document.getElementById('nav-user-role');
+  roleEl.textContent = _currentRole.toUpperCase();
+  roleEl.style.background = roleColors[_currentRole] || '#888';
+  roleEl.style.color = '#fff';
+  // Mostra/nascondi pulsante admin
+  if (_currentRole === 'admin') {
+    document.getElementById('nav-admin').style.display = '';
+  }
+  // Nascondi login, mostra app
+  document.getElementById('login-screen').style.display = 'none';
+  // Carica dati
+  loadFromSupabase();
+}
+
+async function doLogout() {
+  if (!confirm('Vuoi uscire?')) return;
+  var sb = getSupabaseClient();
+  await sb.auth.signOut();
+  _currentUser = null; _currentRole = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('nav-admin').style.display = 'none';
+  document.getElementById('nav-user-email').textContent = '';
+  document.getElementById('nav-user-role').textContent = '';
+  // Reset app state
+  personnel = []; sessions = []; pianiData = [];
+  var vd = document.getElementById('view-dashboard'); if(vd) vd.dataset.built = '';
+  showLoading(true);
+}
+
+function canEdit() {
+  return _currentRole === 'admin' || _currentRole === 'editor';
+}
+
+// ===== PANNELLO ADMIN =====
+async function rAdmin() {
+  var sb = getSupabaseClient();
+  var res = await sb.from('profiles').select('id, full_name, role');
+  var users = (res.data || []);
+  // Recupera email da auth (solo admin può fare questo via service role — usiamo quello che abbiamo)
+  var rows = users.map(function(u, i) {
+    var roleOpts = ['viewer','editor','admin'].map(function(r) {
+      return '<option value="'+r+'"'+(u.role===r?' selected':'')+'>'+r+'</option>';
+    }).join('');
+    return '<tr style="background:'+(i%2===0?'transparent':'#f0f6fb')+'">'
+      +'<td style="padding:6px 10px;font-size:12px;font-family:monospace;color:#4a6a88">'+u.id.substring(0,8)+'...</td>'
+      +'<td style="padding:6px 10px;font-size:12px">'+(u.full_name||'—')+'</td>'
+      +'<td style="padding:6px 10px">'
+      +'<select onchange="changeRole(''+u.id+'',this.value)" style="font-size:12px;padding:3px 6px;border:1px solid #c8ddef;border-radius:4px">'+roleOpts+'</select>'
+      +'</td></tr>';
+  }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#aaa">Nessun utente registrato.</td></tr>';
+
+  document.getElementById('view-admin').innerHTML =
+    '<h2>&#9881; Gestione Accessi</h2>'
+    +'<p style="font-size:12px;color:#4a6a88;margin-bottom:14px">Modifica i ruoli degli utenti registrati. Le modifiche sono immediate.</p>'
+    +'<div class="card"><table><thead><tr>'
+    +'<th>ID</th><th>Nome</th><th>Ruolo</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div id="admin-msg" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px"></div>';
+}
+
+async function changeRole(uid, newRole) {
+  var sb = getSupabaseClient();
+  var res = await sb.from('profiles').update({ role: newRole }).eq('id', uid);
+  var msg = document.getElementById('admin-msg');
+  if (res.error) {
+    msg.textContent = 'Errore: ' + res.error.message;
+    msg.style.background = '#fff0f0'; msg.style.color = '#a32d2d';
+  } else {
+    msg.textContent = 'Ruolo aggiornato.';
+    msg.style.background = '#f0fff0'; msg.style.color = '#1a5c1a';
+  }
+  msg.style.display = 'block';
+  setTimeout(function(){ msg.style.display = 'none'; }, 2500);
+}
+
+// ===== INIT AUTH =====
+async function initAuth() {
+  var sb = getSupabaseClient();
+  // Controlla se c'è già una sessione attiva
+  var res = await sb.auth.getSession();
+  if (res.data && res.data.session && res.data.session.user) {
+    await onLoginSuccess(res.data.session.user);
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    showLoading(false);
+    document.querySelector('main').style.display = 'none';
+  }
+}
+
+initAuth();
 
 </script>
 </body>
