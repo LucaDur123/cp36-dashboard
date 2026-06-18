@@ -2399,11 +2399,15 @@ async function rAdmin() {
     }).join('');
     var dName = (u.full_name && u.full_name.trim()) ? u.full_name : '—';
     var dEmail = (u.email && u.email.trim()) ? u.email : '—';
+    var isMe = (u.id === _currentUser.id);
     return '<tr style="background:'+(i%2===0?'transparent':'#f0f6fb')+'">'
       +'<td style="padding:6px 10px;font-size:12px;font-weight:bold">'+dName+'</td>'
       +'<td style="padding:6px 10px;font-size:12px;color:#3a6a9a">'+dEmail+'</td>'
       +'<td style="padding:6px 10px">'
       +'<select onchange="changeRole(\''+u.id+'\',this.value)" style="font-size:12px;padding:3px 6px;border:1px solid #c8ddef;border-radius:4px">'+roleOpts+'</select>'
+      +'</td>'
+      +'<td style="padding:6px 10px">'
+      +(isMe ? '<span style="font-size:11px;color:#aaa">—</span>' : '<button onclick="deleteProfile(\''+u.id+'\')" style="font-size:11px;padding:3px 10px;background:#fff0f0;color:#c0392b;border:1px solid #e8b4b4;border-radius:4px;cursor:pointer">&#10005; Elimina</button>')
       +'</td></tr>';
   }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:#aaa">Nessun utente registrato.</td></tr>';
 
@@ -2411,9 +2415,26 @@ async function rAdmin() {
     '<h2>&#9881; Gestione Accessi</h2>'
     +'<p style="font-size:12px;color:#4a6a88;margin-bottom:14px">Modifica i ruoli degli utenti registrati. Le modifiche sono immediate.</p>'
     +'<div class="card"><table><thead><tr>'
-    +'<th>Nome</th><th>Email</th><th>Ruolo</th>'
+    +'<th>Nome</th><th>Email</th><th>Ruolo</th><th>Azioni</th>'
     +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +'<div id="admin-msg" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px"></div>';
+}
+
+async function deleteProfile(uid) {
+  if (!confirm('Eliminare questo utente? L\'operazione è irreversibile.')) return;
+  var sb = getSupabaseClient();
+  var res = await sb.from('profiles').delete().eq('id', uid);
+  var msg = document.getElementById('admin-msg');
+  if (res.error) {
+    msg.textContent = 'Errore: ' + res.error.message;
+    msg.style.background = '#fff0f0'; msg.style.color = '#a32d2d';
+    msg.style.display = 'block';
+  } else {
+    msg.textContent = 'Utente eliminato.';
+    msg.style.background = '#f0fff0'; msg.style.color = '#1a5c1a';
+    msg.style.display = 'block';
+    setTimeout(function(){ rAdmin(); }, 800);
+  }
 }
 
 async function changeRole(uid, newRole) {
