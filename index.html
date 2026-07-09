@@ -882,7 +882,7 @@ function _refreshDashRows(PS) {
   var posF = val("dash-pos")||"";
   var compF = val("dash-complesso")||"";
   var filt = personnel.filter(function(p){
-    return (!cpF||p.cp===cpF) && (!posF||p.posizione===posF) && (!compF||(p.complesso||"")==compF) && (!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);
+    return (!cpF||p.cp===cpF) && (!posF||(p.posizione||"IN SEDE")===posF) && (!compF||(p.complesso||"")==compF) && (!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);
   });
 
   var tbody = document.getElementById("dash-tbody");
