@@ -776,6 +776,7 @@ function _buildDashLayout(PS) {
     +'<input id="dash-q" placeholder="Cerca cognome..." style="width:175px" autocomplete="off">'
     +'<select id="dash-cp"><option value="" selected>Tutte CP</option>'+cpOpts+'</select>'
     +'<select id="dash-pos"><option value="" selected>Tutte le posizioni</option><option value="IN SEDE">🏠 In Sede</option><option value="IN OPERAZIONE">🎖️ In Operazione</option></select>'
+    +'<select id="dash-complesso" style="display:none"><option value="" selected>Tutti i complessi</option></select>'
     +'<span id="dash-count" style="font-size:11px;color:#7a9ab8"></span>'
     +'</div>'
     +'<div class="card"><div class="tsc">'
@@ -813,6 +814,21 @@ function _buildDashLayout(PS) {
   });
   var posEl = document.getElementById("dash-pos");
   if(posEl) posEl.addEventListener("change", function(){
+    var compSel = document.getElementById("dash-complesso");
+    if(this.value === "IN OPERAZIONE") {
+      // Popola con i complessi esistenti
+      var complessi = [...new Set(personnel.filter(function(p){return p.posizione==="IN OPERAZIONE"&&p.complesso;}).map(function(p){return p.complesso;}))].sort();
+      compSel.innerHTML = '<option value="">Tutti i complessi</option>'
+        + complessi.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join("");
+      compSel.style.display = "";
+    } else {
+      compSel.value = "";
+      compSel.style.display = "none";
+    }
+    _refreshDashRows(buildPS());
+  });
+  var compEl = document.getElementById("dash-complesso");
+  if(compEl) compEl.addEventListener("change", function(){
     _refreshDashRows(buildPS());
   });
 
@@ -864,8 +880,9 @@ function _refreshDashRows(PS) {
   var q   = (_qStore.dash||"").toLowerCase();
   var cpF = val("dash-cp")||"";
   var posF = val("dash-pos")||"";
+  var compF = val("dash-complesso")||"";
   var filt = personnel.filter(function(p){
-    return (!cpF||p.cp===cpF) && (!posF||p.posizione===posF) && (!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);
+    return (!cpF||p.cp===cpF) && (!posF||p.posizione===posF) && (!compF||(p.complesso||"")==compF) && (!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);
   });
 
   var tbody = document.getElementById("dash-tbody");
