@@ -1637,10 +1637,14 @@ function doIns(){
 
 /* STAMPA VIEW */
 function rStp(PS){
-  var q=(_qStore.stp||"").toLowerCase(),cpF=val("stp-cp")||"";
+  var q=(_qStore.stp||"").toLowerCase(),cpF=val("stp-cp")||"",posF=val("stp-pos")||"";
   var cpL=[...new Set(personnel.map(function(p){return p.cp;}))].sort();
   var cpO=cpL.map(function(c){return'<option value="'+c+'"'+(cpF===c?" selected":"")+">CP "+c+"</option>";}).join("");
-  var filt=personnel.filter(function(p){return(!cpF||p.cp===cpF)&&(!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);});
+  var filt=personnel.filter(function(p){
+    return(!cpF||p.cp===cpF)
+      &&(!posF||(p.posizione||"IN SEDE")===posF)
+      &&(!q||(p.cognome+" "+p.nome).toLowerCase().indexOf(q)>=0);
+  });
   filt=filt.slice().sort(function(a,b){
     var pa=pctSch(a.id,PS), pb=pctSch(b.id,PS);
     if(pb!==pa) return pb-pa;
@@ -1653,23 +1657,67 @@ function rStp(PS){
     var compl=pc===100?'<span class="badge ok" style="margin-left:6px">Completo</span>':"";
     var tr=document.createElement("tr");
     tr.style.background=i%2===0?"transparent":"#f0f6fb";
-    tr.innerHTML='<td>'+p.cp+"</td><td>"+p.grado+'</td>'
-      +'<td><span class="stp-name" data-pid="'+p.id+'" style="font-weight:bold;cursor:pointer;color:#1a5c99;text-decoration:underline">'+p.cognome+" "+p.nome+"</span></td>"
+    var posBadge=p.posizione==="IN OPERAZIONE"
+      ?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:#e8a020;color:#fff;font-weight:bold;margin-left:4px">'+(p.complesso||"OP.")+'</span>'
+      :'';
+    tr.innerHTML='<td style="text-align:center"><input type="checkbox" class="stp-chk" data-pid="'+p.id+'" checked></td>'
+      +'<td>'+p.cp+"</td><td>"+p.grado+'</td>'
+      +'<td><span class="stp-name" data-pid="'+p.id+'" style="font-weight:bold;cursor:pointer;color:#1a5c99;text-decoration:underline">'+p.cognome+" "+p.nome+"</span>"+posBadge+"</td>"
       +'<td><div class="bw"><div class="bbg"><div class="bfill" style="width:'+pc+'%;background:'+col+'"></div></div>'
       +'<span style="font-size:11px;font-weight:bold;color:'+col+';min-width:32px">'+pc+"%</span>"+compl+"</div></td>"
       +'<td><button class="bp stp-print" data-pid="'+p.id+'" style="white-space:nowrap">&#128424;Stampa</button></td>';
     return tr.outerHTML;
   }).join("");
   var nPronti=personnel.filter(function(p){var ms=PS[p.id]||{},ok=true;SCHEDA.forEach(function(r){var st=ms[r.mod]&&ms[r.mod].st;if(st!=="ok"&&st!=="warning")ok=false;});return ok;}).length;
-  var _nPronti=personnel.filter(function(p){var ms=PS[p.id]||{},ok=true;SCHEDA.forEach(function(r){var st=ms[r.mod]&&ms[r.mod].st;if(st!=="ok"&&st!=="warning")ok=false;});return ok;}).length;
   el("view-stampa").innerHTML="<h2>Stampa scheda di approntamento</h2>"
-    
     +'<p style="color:#4a6a88;margin-bottom:12px;font-size:13px">Genera la scheda ufficiale pre-compilata. Luogo non specificato = <b>PINEROLO</b>.</p>'
-    +'<div style="margin-bottom:14px"><button id="btn-print-all" class="bp" style="background:#639922;border-color:#4a7518;font-size:13px;padding:8px 20px">&#128424;Stampa tutte le schede pronti ('+nPronti+')</button></div>'
-    +'<div class="filters"><input id="stp-q" placeholder="Cerca cognome..." style="width:190px"><select id="stp-cp"><option value="">Tutte CP</option>'+cpO+"</select></div>"
-    +'<div class="card" id="stp-table-card"><table><thead><tr><th>CP</th><th>Grado</th><th>Cognome Nome</th><th>Completamento scheda</th><th></th></tr></thead><tbody>'+tb+"</tbody></table></div>";
+    +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">'
+    +'<button id="btn-print-all" class="bp" style="background:#639922;border-color:#4a7518;font-size:13px;padding:8px 20px">&#128424; Stampa tutte le schede pronti ('+nPronti+')</button>'
+    +'<button id="btn-print-sel" class="bp" style="background:#1a5c99;border-color:#0f3a6e;font-size:13px;padding:8px 20px">&#128424; Stampa selezionati</button>'
+    +'<button id="btn-sel-all" class="bp" style="font-size:12px;padding:6px 14px">&#9745; Seleziona tutti</button>'
+    +'<button id="btn-sel-none" class="bp" style="font-size:12px;padding:6px 14px">&#9744; Deseleziona tutti</button>'
+    +'</div>'
+    +'<div class="filters">'
+    +'<input id="stp-q" placeholder="Cerca cognome..." style="width:190px">'
+    +'<select id="stp-cp"><option value="">Tutte CP</option>'+cpO+"</select>"
+    +'<select id="stp-pos"><option value="">Tutte le posizioni</option><option value="IN SEDE"'+(posF==="IN SEDE"?" selected":"")+'>🏠 In Sede</option><option value="IN OPERAZIONE"'+(posF==="IN OPERAZIONE"?" selected":"")+'>🎖️ In Operazione</option></select>'
+    +'</div>'
+    +'<div class="card" id="stp-table-card"><table><thead><tr><th style="width:30px"><input type="checkbox" id="stp-chk-all" checked title="Seleziona/deseleziona tutti"></th><th>CP</th><th>Grado</th><th>Cognome Nome</th><th>Completamento scheda</th><th></th></tr></thead><tbody>'+tb+"</tbody></table></div>";
+
   _bindSearch("stp-q","stp",function(){rStp(buildPS());});
   _bindSelect("stp-cp",function(){rStp(buildPS());});
+  var posElStp=document.getElementById("stp-pos");
+  if(posElStp) posElStp.addEventListener("change",function(){_qStore.stpPos=this.value;rStp(buildPS());});
+
+  // Checkbox master
+  var chkAll=document.getElementById("stp-chk-all");
+  if(chkAll) chkAll.addEventListener("change",function(){
+    document.querySelectorAll(".stp-chk").forEach(function(c){c.checked=chkAll.checked;});
+  });
+
+  // Bottone seleziona tutti
+  var btnSelAll=document.getElementById("btn-sel-all");
+  if(btnSelAll) btnSelAll.addEventListener("click",function(){
+    document.querySelectorAll(".stp-chk").forEach(function(c){c.checked=true;});
+    if(chkAll) chkAll.checked=true;
+  });
+
+  // Bottone deseleziona tutti
+  var btnSelNone=document.getElementById("btn-sel-none");
+  if(btnSelNone) btnSelNone.addEventListener("click",function(){
+    document.querySelectorAll(".stp-chk").forEach(function(c){c.checked=false;});
+    if(chkAll) chkAll.checked=false;
+  });
+
+  // Stampa selezionati
+  var btnSel=document.getElementById("btn-print-sel");
+  if(btnSel) btnSel.addEventListener("click",function(){
+    var pids=[...document.querySelectorAll(".stp-chk:checked")].map(function(c){return c.dataset.pid;});
+    if(pids.length===0){alert("Nessun militare selezionato.");return;}
+    pids.forEach(function(pid){openPrint(pid);});
+  });
+
+  // Stampa tutti i pronti
   var btnAll=document.getElementById("btn-print-all");
   if(btnAll) btnAll.addEventListener("click",function(){openPrintAll(buildPS());});
   var stpCard=document.getElementById("stp-table-card");
@@ -1922,8 +1970,8 @@ function openPrint(pid){
       rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+a.text+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"
-        +"Pistola: "+polArxCell+fatsArxLine
-        +"<br>Fucile: "+polPbCell+fatsPbLine
+        +"Fucile (ARX): "+polArxCell+fatsArxLine
+        +"<br>Pistola (PB): "+polPbCell+fatsPbLine
         +"</td></tr>";
     } else {
       var cellContent = a.isHtml ? a.text : a.text;
