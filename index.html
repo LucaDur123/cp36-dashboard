@@ -1713,8 +1713,7 @@ function rStp(PS){
   var btnSel=document.getElementById("btn-print-sel");
   if(btnSel) btnSel.addEventListener("click",function(){
     var pids=[...document.querySelectorAll(".stp-chk:checked")].map(function(c){return c.dataset.pid;});
-    if(pids.length===0){alert("Nessun militare selezionato.");return;}
-    pids.forEach(function(pid){openPrint(pid);});
+    openPrintMultiple(pids);
   });
 
   // Stampa tutti i pronti
@@ -1931,7 +1930,7 @@ function quickAddSave(pid,mod){
 }
 
 /* STAMPA SCHEDA */
-function openPrint(pid){
+function buildSchedaHtml(pid){
   var p=null;
   for(var i=0;i<personnel.length;i++) if(personnel[i].id===pid){p=personnel[i];break;}
   if(!p) return;
@@ -2014,8 +2013,50 @@ function openPrint(pid){
     +"</div>"
 
     +"</body></html>";
-  // Open in new tab - works on both desktop and mobile
+  return html;
+}
+
+function openPrint(pid){
+  var html = buildSchedaHtml(pid);
+  if(!html) return;
   var blob = new Blob([html], {type: "text/html;charset=utf-8"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+}
+
+function openPrintMultiple(pids){
+  if(!pids||pids.length===0){alert("Nessun militare selezionato.");return;}
+  if(pids.length===1){openPrint(pids[0]);return;}
+  // Genera un unico documento con tutte le schede separate da page-break
+  var parts = [];
+  pids.forEach(function(pid){
+    var h = buildSchedaHtml(pid);
+    if(!h) return;
+    // Estrai solo il body dal documento completo
+    var bodyMatch = h.match(/<body[^>]*>([\s\S]*)<\/body>/);
+    if(bodyMatch) parts.push(bodyMatch[1]);
+  });
+  if(parts.length===0) return;
+  // Prendi header/stili dalla prima scheda
+  var firstHtml = buildSchedaHtml(pids[0]);
+  var headMatch = firstHtml.match(/^([\s\S]*?<body[^>]*>)/);
+  var header = headMatch ? headMatch[1] : "<html><body>";
+  // Rimuovi il bottone stampa da ogni scheda tranne l'ultima, aggiungi page-break
+  var combined = header
+    + parts.map(function(p, i){
+        var clean = p.replace(/<div[^>]*>[^<]*Stampa[^<]*<\/button>[^<]*<\/div>/g,"");
+        return clean + (i < parts.length-1 ? '<div style="page-break-after:always"></div>' : "");
+      }).join("")
+    + '<div style="text-align:center;margin:20px"><button onclick="window.print()" style="padding:8px 28px;font-size:11pt;background:#1a5c99;color:#fff;border:none;border-radius:6px;cursor:pointer">&#128424; Stampa / Salva PDF</button></div>'
+  + '</body></html>';
+  var blob = new Blob([combined], {type: "text/html;charset=utf-8"});
   var url = URL.createObjectURL(blob);
   var a = document.createElement("a");
   a.href = url;
