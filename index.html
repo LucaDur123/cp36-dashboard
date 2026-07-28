@@ -1974,7 +1974,18 @@ function buildSchedaHtml(pid){
         +"</td></tr>";
     } else {
       var cellContent = a.isHtml ? a.text : a.text;
-      var dateCell = a.luogo==="idoneita" ? getDataFmt("idoneita") : getCella(a.luogo);
+      var dateCell;
+      if(a.luogo==="idoneita"){
+        dateCell=getDataFmt("idoneita");
+      } else if(a.luogo==="pefo"){
+        var cellaAgil=getCella("agilita");
+        var cella10x10=getCella("pefo");
+        dateCell="";
+        if(cellaAgil) dateCell+="Agilità: "+cellaAgil;
+        if(cella10x10) dateCell+=(dateCell?"<br>":"")+"10x10: "+cella10x10;
+      } else {
+        dateCell=getCella(a.luogo);
+      }
       rowsHtml+="<tr><td style='border:1px solid #000;padding:4px 6px;text-align:center;font-weight:bold;width:4%;vertical-align:top'>"+a.n+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;vertical-align:top;text-align:justify'>"+cellContent+"</td>"
         +"<td style='border:1px solid #000;padding:4px 6px;width:22%;vertical-align:top'>"+dateCell+"</td></tr>";
